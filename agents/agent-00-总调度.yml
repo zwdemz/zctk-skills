@@ -1,0 +1,572 @@
+app:
+  description: '智创探客总调度Agent——识别用户意图后路由到科普问答/伦理思辨/手抄报/课件四个子能力，实现多Agent协作统一入口'
+  icon: "🧭"
+  icon_background: '#E0E7FF'
+  mode: workflow
+  name: 探客·总调度
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/volcengine_maas:0.0.20@aff2eaf766b1774519c3ca0e77de0b28c87b71cce6390b22a103518e8a5e4ae7
+kind: app
+version: 0.3.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+      image:
+        enabled: false
+    opening_statement: |
+      嗨！👋 我是「探客」，你的AI科普总调度员。
+      直接问我任何AI相关的问题，我会自动判断你的需求：
+      🔍 问知识 → 通俗讲解
+      🎭 聊伦理 → 思辨剧场
+      🎨 做手抄报 → 文案素材
+      📋 备课 → 班会课件
+      开始吧！比如"什么是机器学习？"或者"帮我做张手抄报"
+      （内容由AI生成）
+    retriever_resource:
+      enabled: true
+    sensitive_word_avoidance:
+      enabled: true
+    speech_to_text:
+      enabled: true
+    suggested_questions:
+    - 什么是人工智能？
+    - AI换脸恶搞同学对吗？
+    - 帮我做一张AI科普手抄报
+    - 生成一节AI伦理班会课件
+    - 刷视频为什么停不下来？
+    suggested_questions_after_answer:
+      enabled: true
+    text_to_speech:
+      enabled: true
+      language: zh-CN
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: start
+        targetType: llm
+      id: start-to-classify
+      source: start-node
+      sourceHandle: source
+      target: llm-classify
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: if-else
+      id: classify-to-branch
+      source: llm-classify
+      sourceHandle: source
+      target: intent-branch
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: if-else
+        targetType: llm
+      id: branch-qa
+      source: intent-branch
+      sourceHandle: qa
+      target: llm-qa
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: if-else
+        targetType: llm
+      id: branch-ethics
+      source: intent-branch
+      sourceHandle: ethics
+      target: llm-ethics
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: if-else
+        targetType: knowledge-retrieval
+      id: branch-poster
+      source: intent-branch
+      sourceHandle: poster
+      target: retrieval-poster
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: if-else
+        targetType: knowledge-retrieval
+      id: branch-course
+      source: intent-branch
+      sourceHandle: courseware
+      target: retrieval-course
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: knowledge-retrieval
+        targetType: llm
+      id: ret-poster-to-llm
+      source: retrieval-poster
+      sourceHandle: source
+      target: llm-poster
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: knowledge-retrieval
+        targetType: llm
+      id: ret-course-to-llm
+      source: retrieval-course
+      sourceHandle: source
+      target: llm-course
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: end
+      id: qa-to-end
+      source: llm-qa
+      sourceHandle: source
+      target: end-node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: end
+      id: ethics-to-end
+      source: llm-ethics
+      sourceHandle: source
+      target: end-node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: end
+      id: poster-to-end
+      source: llm-poster
+      sourceHandle: source
+      target: end-node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: end
+      id: course-to-end
+      source: llm-course
+      sourceHandle: source
+      target: end-node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        desc: 调度入口
+        selected: false
+        title: 开始
+        type: start
+        variables: []
+      height: 54
+      id: start-node
+      position:
+        x: 80
+        y: 282
+      positionAbsolute:
+        x: 80
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: 意图分类——qa/ethics/poster/courseware
+        model:
+          completion_params:
+            temperature: 0.3
+            max_tokens: 50
+          mode: chat
+          name: DeepSeek-V3
+          provider: langgenius/volcengine_maas/volcengine_maas
+        prompt_template:
+        - id: classify
+          role: system
+          text: |
+            仅输出一个词判断意图：
+            - qa：知识问答（什么是AI、原理、应用、隐私）
+            - ethics：伦理讨论（对错、两难、道德判断）
+            - poster：手抄报/海报制作
+            - courseware：备课/课件/班会材料
+            用户输入：{{#sys.query#}}
+            输出：
+        selected: false
+        title: 意图识别
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 90
+      id: llm-classify
+      position:
+        x: 384
+        y: 282
+      positionAbsolute:
+        x: 384
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        cases:
+        - case_id: qa
+          conditions:
+          - comparison_operator: contains
+            id: c-qa
+            value: qa
+            varType: string
+            variable_selector:
+            - llm-classify
+            - text
+          logical_operator: and
+        - case_id: ethics
+          conditions:
+          - comparison_operator: contains
+            id: c-ethics
+            value: ethics
+            varType: string
+            variable_selector:
+            - llm-classify
+            - text
+          logical_operator: and
+        - case_id: poster
+          conditions:
+          - comparison_operator: contains
+            id: c-poster
+            value: poster
+            varType: string
+            variable_selector:
+            - llm-classify
+            - text
+          logical_operator: and
+        - case_id: courseware
+          conditions:
+          - comparison_operator: contains
+            id: c-course
+            value: courseware
+            varType: string
+            variable_selector:
+            - llm-classify
+            - text
+          logical_operator: and
+        desc: 根据意图路由到对应处理分支
+        selected: false
+        title: 意图路由
+        type: if-else
+      height: 280
+      id: intent-branch
+      position:
+        x: 688
+        y: 282
+      positionAbsolute:
+        x: 688
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: 科普问答
+        model:
+          completion_params:
+            temperature: 0.7
+            max_tokens: 512
+          mode: chat
+          name: DeepSeek-V3
+          provider: langgenius/volcengine_maas/volcengine_maas
+        prompt_template:
+        - id: qa-prompt
+          role: system
+          text: |
+            # 探客·AI科普向导
+            面向12-15岁初中生，亲切学长学姐风格。
+            ## 结构：1.一句说清 2.打比方 3.联系生活 4.小结
+            ## 要求：<250字、避术语、emoji适量、无信息说"不确定"
+            末尾标注"（内容由AI生成）"
+            问题：{{#sys.query#}}
+        selected: false
+        title: 科普问答
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 90
+      id: llm-qa
+      position:
+        x: 992
+        y: 100
+      positionAbsolute:
+        x: 992
+        y: 100
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: 伦理思辨
+        model:
+          completion_params:
+            temperature: 0.8
+            max_tokens: 400
+          mode: chat
+          name: DeepSeek-V3
+          provider: langgenius/volcengine_maas/volcengine_maas
+        prompt_template:
+        - id: ethics-prompt
+          role: system
+          text: |
+            # 思辨向导
+            你不是老师，是讨论主持人。面向12-15岁初中生。
+            ## 输出：【情景】100字AI伦理场景 【问题】两难问题 【选择】A/B/C
+            ## 要求：真实接地气、无标准答案、不用术语
+            话题：{{#sys.query#}}
+        selected: false
+        title: 伦理思辨
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 90
+      id: llm-ethics
+      position:
+        x: 992
+        y: 282
+      positionAbsolute:
+        x: 992
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        dataset_ids: []
+        desc: 手抄报知识检索
+        multiple_retrieval_config:
+          reranking_enable: false
+          reranking_mode: reranking_model
+          reranking_model:
+            model: bge-reranker-base
+            provider: langgenius/xinference/xinference
+          score_threshold: null
+          top_k: 5
+        query_variable_selector: []
+        retrieval_mode: multiple
+        selected: false
+        title: 知识检索(手抄报)
+        type: knowledge-retrieval
+      height: 92
+      id: retrieval-poster
+      position:
+        x: 992
+        y: 464
+      positionAbsolute:
+        x: 992
+        y: 464
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        dataset_ids: []
+        desc: 课件知识检索
+        multiple_retrieval_config:
+          reranking_enable: false
+          reranking_mode: reranking_model
+          reranking_model:
+            model: bge-reranker-base
+            provider: langgenius/xinference/xinference
+          score_threshold: null
+          top_k: 5
+        query_variable_selector: []
+        retrieval_mode: multiple
+        selected: false
+        title: 知识检索(课件)
+        type: knowledge-retrieval
+      height: 92
+      id: retrieval-course
+      position:
+        x: 992
+        y: 646
+      positionAbsolute:
+        x: 992
+        y: 646
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: 手抄报生成
+        model:
+          completion_params:
+            temperature: 0.8
+            max_tokens: 800
+          mode: chat
+          name: DeepSeek-V3
+          provider: langgenius/volcengine_maas/volcengine_maas
+        prompt_template:
+        - id: poster-prompt
+          role: system
+          text: |
+            # 手抄报设计师
+            主题：{{#sys.query#}}  参考：{{#retrieval-poster.result#}}
+            ## 输出严格JSON：{"title":"8字标题","article":"150字科普短文","facts":["知识点1","知识点2","知识点3"],"imagePrompt":"文生图提示词：卡通色彩明快","layoutTip":"排版建议"}
+            ## 风格：通俗口语、有趣、初中生能懂
+        selected: false
+        title: 手抄报生成
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 90
+      id: llm-poster
+      position:
+        x: 1296
+        y: 464
+      positionAbsolute:
+        x: 1296
+        y: 464
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: 课件生成
+        model:
+          completion_params:
+            temperature: 0.7
+            max_tokens: 1200
+          mode: chat
+          name: DeepSeek-V3
+          provider: langgenius/volcengine_maas/volcengine_maas
+        prompt_template:
+        - id: course-prompt
+          role: system
+          text: |
+            # 课件设计师
+            主题：{{#sys.query#}}  参考：{{#retrieval-course.result#}}
+            ## 输出严格JSON：{"courseTitle":"标题","duration":"45分钟","objectives":{"knowledge":"","ability":"","literacy":""},"flow":[{"step":1,"phase":"导入","duration":"5分钟","title":"","content":"","imagePrompt":"卡通"}],"homework":"","thinkQuestions":["",""],"teacherNotes":""}
+            ## 风格：5页课件、活动可执行、配图文生图风格
+        selected: false
+        title: 课件生成
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 90
+      id: llm-course
+      position:
+        x: 1296
+        y: 646
+      positionAbsolute:
+        x: 1296
+        y: 646
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: 输出
+        outputs:
+        - value_selector:
+          - llm-qa
+          - text
+          variable: text
+        - value_selector:
+          - llm-ethics
+          - text
+          variable: text
+        - value_selector:
+          - llm-poster
+          - text
+          variable: text
+        - value_selector:
+          - llm-course
+          - text
+          variable: text
+        selected: false
+        title: 结束
+        type: end
+      height: 116
+      id: end-node
+      position:
+        x: 1600
+        y: 464
+      positionAbsolute:
+        x: 1600
+        y: 464
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 1

@@ -23,7 +23,8 @@ Multi-agent AI science education system for middle school students (12-15 years 
 zctk-skills/
 ├── SKILL.md                           # This file
 ├── README.md                          # Full documentation
-├── agents/                            # 4 Agent YML configs
+├── agents/                            # 5 Agent YML configs
+│   ├── agent-00-总调度.yml            # Workflow: intent routing orchestrator
 │   ├── agent-01-科普向导.yml          # Chat agent: AI Q&A
 │   ├── agent-02-伦理剧场.yml          # Workflow agent: ethics scenarios
 │   ├── agent-03-手抄报工坊.yml        # Workflow agent: poster generation
@@ -38,6 +39,7 @@ zctk-skills/
 ├── scripts/                           # Python tools
 │   ├── collect_cases.py               # Case collection & cleaning
 │   ├── build_knowledge_base.py        # KB chunking & stats
+│   ├── validate_agents.py             # Pre-import YML validation
 │   └── requirements.txt
 └── output/                            # Generated artifacts
 ```
@@ -46,6 +48,7 @@ zctk-skills/
 
 | # | Agent | Type | Trigger | Output |
 |---|-------|------|---------|--------|
+| 0 | 总调度 | Workflow | User enters any query | Intent routing to sub-agent |
 | 1 | 科普向导 | Chat | Student asks AI question | Plain text (<250 chars) |
 | 2 | 伦理剧场 | Workflow | Student picks scenario | Branching ethics discussion |
 | 3 | 手抄报工坊 | Workflow | Student enters topic | JSON poster content |
@@ -92,13 +95,20 @@ python scripts/collect_cases.py --source builtin --output output/cases.json
 python scripts/collect_cases.py --source urls-file --urls-file urls.txt --output output/cases.json
 ```
 
+### Pre-Import Validation
+
+```bash
+python scripts/validate_agents.py
+```
+
 ## Platform Import Steps
 
-1. Create agent on 桂教通 → Import YML from `agents/`
-2. Upload `knowledge-base/*.md` to platform knowledge base
-3. Update `dataset_ids` in each agent to match platform KB IDs
-4. Update `model.name` / `model.provider` to platform available models
-5. Enable external sharing → copy share URL for Web integration
+1. Run `python scripts/validate_agents.py` — fix any errors before import
+2. Create agent on 桂教通 → Import YML from `agents/`
+3. Upload `knowledge-base/*.md` to platform knowledge base
+4. Update `dataset_ids` in each agent to match platform KB IDs
+5. Update `model.name` / `model.provider` to platform available models
+6. Enable external sharing → copy share URL for Web integration
 
 ## Common Mistakes
 
