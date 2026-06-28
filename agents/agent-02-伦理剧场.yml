@@ -1,0 +1,481 @@
+app:
+  description: 'AI伦理思辨工作流——用两难情景剧引导初中生主动思考AI伦理议题，不灌输不评判，培养独立思辨能力'
+  icon: "🎭"
+  icon_background: '#FEF3C7'
+  mode: workflow
+  name: 思辨·伦理剧场
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/volcengine_maas:0.0.20@aff2eaf766b1774519c3ca0e77de0b28c87b71cce6390b22a103518e8a5e4ae7
+kind: app
+version: 0.3.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+      image:
+        enabled: false
+    opening_statement: |
+      欢迎来到「思辨剧场」！
+      这里不考试、不评分、没有标准答案。我会给你一个AI相关的情景，
+      你来做选择，然后我们一起聊聊为什么这样选。
+      准备好了吗？选一个你感兴趣的话题开始吧
+      （内容由AI生成）
+    retriever_resource:
+      enabled: true
+    sensitive_word_avoidance:
+      enabled: true
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+    - AI换脸恶搞同学，你怎么看？
+    - 刷视频刷到停不下来，是AI的问题吗？
+    - 人脸识别进校园，你支持还是反对？
+    - AI帮你写作业被老师发现了，谁的责任？
+    - 手机APP总要你的定位，合理吗？
+    suggested_questions_after_answer:
+      enabled: true
+    text_to_speech:
+      enabled: false
+  graph:
+    edges:
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: start
+        targetType: knowledge-retrieval
+      id: start-to-retrieval
+      source: start-node
+      sourceHandle: source
+      target: retrieval-node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: knowledge-retrieval
+        targetType: llm
+      id: retrieval-to-llm
+      source: retrieval-node
+      sourceHandle: source
+      target: llm-scenario
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: if-else
+      id: llm-to-branch
+      source: llm-scenario
+      sourceHandle: source
+      target: stance-branch
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: if-else
+        targetType: llm
+      id: branch-support
+      source: stance-branch
+      sourceHandle: support
+      target: llm-support
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: if-else
+        targetType: llm
+      id: branch-against
+      source: stance-branch
+      sourceHandle: against
+      target: llm-against
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: if-else
+        targetType: llm
+      id: branch-unsure
+      source: stance-branch
+      sourceHandle: unsure
+      target: llm-unsure
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: end
+      id: support-to-end
+      source: llm-support
+      sourceHandle: source
+      target: end-node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: end
+      id: against-to-end
+      source: llm-against
+      sourceHandle: source
+      target: end-node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: end
+      id: unsure-to-end
+      source: llm-unsure
+      sourceHandle: source
+      target: end-node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        desc: 思辨剧场入口
+        selected: false
+        title: 开始
+        type: start
+        variables: []
+      height: 54
+      id: start-node
+      position:
+        x: 80
+        y: 282
+      positionAbsolute:
+        x: 80
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        dataset_ids: []
+        desc: 从知识库检索伦理情景素材
+        multiple_retrieval_config:
+          reranking_enable: false
+          reranking_mode: reranking_model
+          reranking_model:
+            model: bge-reranker-base
+            provider: langgenius/xinference/xinference
+          score_threshold: null
+          top_k: 3
+        query_variable_selector: []
+        retrieval_mode: multiple
+        selected: false
+        title: 情景素材检索
+        type: knowledge-retrieval
+      height: 92
+      id: retrieval-node
+      position:
+        x: 384
+        y: 282
+      positionAbsolute:
+        x: 384
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: 生成伦理两难情景卡片
+        model:
+          completion_params:
+            temperature: 0.8
+            max_tokens: 400
+          mode: chat
+          name: DeepSeek-V3
+          provider: langgenius/volcengine_maas/volcengine_maas
+        prompt_template:
+        - id: scenario-prompt
+          role: system
+          text: |
+            # 角色：思辨向导
+            你不是老师，而是一个"抛出问题、引导思考"的讨论主持人。
+            面向12-15岁初中生，引导他们思考AI伦理两难问题。
+
+            ## 输出结构（严格按此格式）
+            【情景】
+            用100字以内描述一个贴近初中生生活的AI伦理场景。
+            【两难问题】
+            提出一个开放式问题，引导做出选择。
+            【你的选择】
+            A. 支持/同意
+            B. 反对/不同意
+            C. 我不确定
+
+            ## 风格要求
+            - 情景要真实、接地气（校园、家庭、社交场景）
+            - 不预设"正确答案"
+            - 不用专业伦理术语
+            - 语气年轻化，像同学在聊天
+
+            ## 安全边界
+            - 不涉及暴力、色情、违法内容
+            - 不引导负面价值观
+            - 符合教育方针
+        selected: false
+        title: 生成情景卡片
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 90
+      id: llm-scenario
+      position:
+        x: 688
+        y: 282
+      positionAbsolute:
+        x: 688
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        cases:
+        - case_id: support
+          conditions:
+          - comparison_operator: contains
+            id: cond-support
+            value: A
+            varType: string
+            variable_selector:
+            - env
+            - user_choice
+          logical_operator: and
+        - case_id: against
+          conditions:
+          - comparison_operator: contains
+            id: cond-against
+            value: B
+            varType: string
+            variable_selector:
+            - env
+            - user_choice
+          logical_operator: and
+        - case_id: unsure
+          conditions:
+          - comparison_operator: contains
+            id: cond-unsure
+            value: C
+            varType: string
+            variable_selector:
+            - env
+            - user_choice
+          logical_operator: and
+        desc: 根据学生立场引导不同方向的思辨追问
+        selected: false
+        title: 立场判断
+        type: if-else
+      height: 220
+      id: stance-branch
+      position:
+        x: 992
+        y: 282
+      positionAbsolute:
+        x: 992
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: 从对立角度追问
+        model:
+          completion_params:
+            temperature: 0.7
+            max_tokens: 300
+          mode: chat
+          name: DeepSeek-V3
+          provider: langgenius/volcengine_maas/volcengine_maas
+        prompt_template:
+        - id: support-prompt
+          role: system
+          text: |
+            # 角色：思辨向导（质疑方）
+            学生选择了「支持」立场。你的任务是帮TA看到问题的另一面。
+            ## 回应结构
+            1. 先肯定学生的思考角度
+            2. 从一个TA可能没想到的角度提出反方观点
+            3. 追问1个问题引导重新思考
+            ## 要求
+            - 语气温和，不批判
+            - 只问1个问题
+            - 控制在150字以内
+        selected: false
+        title: 支持方追问
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 90
+      id: llm-support
+      position:
+        x: 1296
+        y: 200
+      positionAbsolute:
+        x: 1296
+        y: 200
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: 从支持角度追问
+        model:
+          completion_params:
+            temperature: 0.7
+            max_tokens: 300
+          mode: chat
+          name: DeepSeek-V3
+          provider: langgenius/volcengine_maas/volcengine_maas
+        prompt_template:
+        - id: against-prompt
+          role: system
+          text: |
+            # 角色：思辨向导（支持方）
+            学生选择了「反对」立场。你的任务是帮TA看到另一面。
+            ## 回应结构
+            1. 先肯定学生的担忧或质疑是有道理的
+            2. 从积极角度说明这个技术的价值
+            3. 追问1个问题引导思考如何平衡利弊
+            ## 要求
+            - 语气温和，不批判
+            - 只问1个问题
+            - 控制在150字以内
+        selected: false
+        title: 反对方追问
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 90
+      id: llm-against
+      position:
+        x: 1296
+        y: 364
+      positionAbsolute:
+        x: 1296
+        y: 364
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: 帮助不确定的学生理清方向
+        model:
+          completion_params:
+            temperature: 0.7
+            max_tokens: 300
+          mode: chat
+          name: DeepSeek-V3
+          provider: langgenius/volcengine_maas/volcengine_maas
+        prompt_template:
+        - id: unsure-prompt
+          role: system
+          text: |
+            # 角色：思辨向导（引导方）
+            学生选择了「不确定」。这是很好的思考状态。
+            ## 回应结构
+            1. 肯定犹豫：不确定说明你在认真思考，这很棒
+            2. 简单列出支持和反对的各1个理由
+            3. 邀请TA说说最纠结的那个点
+            ## 要求
+            - 不给压力，不确定完全OK
+            - 只问1个问题
+            - 控制在150字以内
+        selected: false
+        title: 不确定方追问
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 90
+      id: llm-unsure
+      position:
+        x: 1296
+        y: 528
+      positionAbsolute:
+        x: 1296
+        y: 528
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: 输出思辨讨论结果
+        outputs:
+        - value_selector:
+          - llm-support
+          - text
+          variable: text
+        - value_selector:
+          - llm-against
+          - text
+          variable: text
+        - value_selector:
+          - llm-unsure
+          - text
+          variable: text
+        selected: false
+        title: 结束
+        type: end
+      height: 116
+      id: end-node
+      position:
+        x: 1600
+        y: 364
+      positionAbsolute:
+        x: 1600
+        y: 364
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 1

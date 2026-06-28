@@ -1,0 +1,321 @@
+app:
+  description: 'AI科普手抄报内容生成器——输入主题一键生成手抄报文案、趣味知识卡片和配图提示词，JSON结构化输出'
+  icon: "🎨"
+  icon_background: '#FCE7F3'
+  mode: workflow
+  name: 创作·手抄报工坊
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/volcengine_maas:0.0.20@aff2eaf766b1774519c3ca0e77de0b28c87b71cce6390b22a103518e8a5e4ae7
+kind: app
+version: 0.3.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+      image:
+        enabled: false
+    opening_statement: |
+      一起来做AI科普手抄报吧！
+      输入你想做的主题，我帮你生成文案和知识点，你只管排版画画就好
+      （内容由AI生成）
+    retriever_resource:
+      enabled: true
+    sensitive_word_avoidance:
+      enabled: true
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+    - 主题：AI怎么认出照片里的人
+    - 主题：为什么刷视频停不下来
+    - 主题：语音助手怎么听懂我的话
+    - 主题：AI能帮我学习吗
+    - 主题：AI会让世界变好还是变坏
+    suggested_questions_after_answer:
+      enabled: true
+    text_to_speech:
+      enabled: false
+  graph:
+    edges:
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: start
+        targetType: knowledge-retrieval
+      id: start-to-retrieval
+      source: start-node
+      sourceHandle: source
+      target: retrieval-node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: knowledge-retrieval
+        targetType: llm
+      id: retrieval-to-llm
+      source: retrieval-node
+      sourceHandle: source
+      target: llm-poster
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: code
+      id: llm-to-code
+      source: llm-poster
+      sourceHandle: source
+      target: code-json
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: code
+        targetType: end
+      id: code-to-end
+      source: code-json
+      sourceHandle: source
+      target: end-node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        desc: 输入手抄报主题和年级
+        selected: false
+        title: 开始
+        type: start
+        variables:
+        - label: 手抄报主题
+          max_length: 30
+          options: []
+          required: true
+          type: text-input
+          variable: topic
+        - label: 年级
+          max_length: 10
+          options:
+          - 初一
+          - 初二
+          - 初三
+          required: true
+          type: select
+          variable: grade
+      height: 100
+      id: start-node
+      position:
+        x: 80
+        y: 282
+      positionAbsolute:
+        x: 80
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        dataset_ids: []
+        desc: 检索与主题相关的科普知识
+        multiple_retrieval_config:
+          reranking_enable: false
+          reranking_mode: reranking_model
+          reranking_model:
+            model: bge-reranker-base
+            provider: langgenius/xinference/xinference
+          score_threshold: null
+          top_k: 5
+        query_variable_selector:
+        - start-node
+        - topic
+        retrieval_mode: multiple
+        selected: false
+        title: 知识检索
+        type: knowledge-retrieval
+      height: 92
+      id: retrieval-node
+      position:
+        x: 384
+        y: 282
+      positionAbsolute:
+        x: 384
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: 生成手抄报JSON内容
+        model:
+          completion_params:
+            temperature: 0.8
+            max_tokens: 800
+          mode: chat
+          name: DeepSeek-V3
+          provider: langgenius/volcengine_maas/volcengine_maas
+        prompt_template:
+        - id: poster-prompt
+          role: system
+          text: |
+            # 角色：手抄报设计师
+            你是初中生AI科普手抄报的内容设计师。根据主题和年级生成手抄报内容。
+
+            # 输入
+            - 主题：{{#start-node.topic#}}
+            - 年级：{{#start-node.grade#}}
+            - 参考知识：{{#retrieval-node.result#}}
+
+            # 输出格式（严格JSON，不输出其他文字）
+            {
+              "title": "8字以内吸睛标题",
+              "subtitle": "副标题12字以内",
+              "article": "150字科普短文，通俗口语化",
+              "facts": ["知识点1≤30字", "知识点2≤30字", "知识点3≤30字"],
+              "lifeColumn": "80字AI与生活应用",
+              "thinkQuestion": "1个思考问题≤20字",
+              "imagePrompt": "文生图提示词：卡通风格色彩明快适合初中生",
+              "layoutTip": "排版建议1句话"
+            }
+
+            # 风格
+            - 标题有趣有梗，如"刷视频时AI在干啥？"
+            - 短文用初中生能听懂的话，禁止术语
+            - 初一更简单词汇，初三可稍深入
+            - 内容健康向上，符合教育方针
+        selected: false
+        title: 生成手抄报内容
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 90
+      id: llm-poster
+      position:
+        x: 688
+        y: 282
+      positionAbsolute:
+        x: 688
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        code: |
+          import json
+
+          def main(text: str) -> dict:
+              """解析LLM输出的JSON字符串"""
+              try:
+                  cleaned = text.strip()
+                  if cleaned.startswith("```json"):
+                      cleaned = cleaned[7:]
+                  if cleaned.startswith("```"):
+                      cleaned = cleaned[3:]
+                  if cleaned.endswith("```"):
+                      cleaned = cleaned[:-3]
+                  cleaned = cleaned.strip()
+                  data = json.loads(cleaned)
+                  return {
+                      "result": json.dumps(data, ensure_ascii=False, indent=2),
+                      "title": data.get("title", ""),
+                      "article": data.get("article", ""),
+                      "facts": json.dumps(data.get("facts", []), ensure_ascii=False),
+                      "imagePrompt": data.get("imagePrompt", ""),
+                      "layoutTip": data.get("layoutTip", "")
+                  }
+              except json.JSONDecodeError as e:
+                  return {
+                      "result": json.dumps({"error": str(e)}, ensure_ascii=False),
+                      "title": "", "article": "", "facts": "[]",
+                      "imagePrompt": "", "layoutTip": ""
+                  }
+        code_language: python3
+        desc: 解析并校验LLM输出的JSON
+        outputs:
+          result:
+            children: null
+            type: string
+          title:
+            children: null
+            type: string
+          article:
+            children: null
+            type: string
+          facts:
+            children: null
+            type: string
+          imagePrompt:
+            children: null
+            type: string
+          layoutTip:
+            children: null
+            type: string
+        selected: false
+        title: JSON解析
+        type: code
+        variables:
+        - value_selector:
+          - llm-poster
+          - text
+          variable: text
+      height: 54
+      id: code-json
+      position:
+        x: 992
+        y: 282
+      positionAbsolute:
+        x: 992
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: 输出手抄报数据
+        outputs:
+        - value_selector:
+          - code-json
+          - result
+          variable: json_result
+        - value_selector:
+          - code-json
+          - title
+          variable: title
+        selected: false
+        title: 结束
+        type: end
+      height: 116
+      id: end-node
+      position:
+        x: 1296
+        y: 282
+      positionAbsolute:
+        x: 1296
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 1

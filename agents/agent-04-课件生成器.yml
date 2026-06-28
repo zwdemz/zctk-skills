@@ -1,0 +1,427 @@
+app:
+  description: 'AI科普班会课件生成器——教师输入主题和年级，自动生成多页课件大纲、配图提示词和课后思考题'
+  icon: "📋"
+  icon_background: '#D1FAE5'
+  mode: workflow
+  name: 备课·课件生成器
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/volcengine_maas:0.0.20@aff2eaf766b1774519c3ca0e77de0b28c87b71cce6390b22a103518e8a5e4ae7
+kind: app
+version: 0.3.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+      image:
+        enabled: false
+    opening_statement: |
+      班会课不知道讲什么AI？我来帮你备课！
+      输入班会主题和年级，生成完整课件大纲、配图建议和课后活动
+      （内容由AI生成）
+    retriever_resource:
+      enabled: true
+    sensitive_word_avoidance:
+      enabled: true
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+    - 主题：AI在我们身边 年级：初一
+    - 主题：刷视频背后的秘密 年级：初二
+    - 主题：AI会取代人类吗 年级：初三
+    - 主题：保护隐私远离算法陷阱 年级：初二
+    - 主题：AI让世界更美好 年级：初一
+    suggested_questions_after_answer:
+      enabled: true
+    text_to_speech:
+      enabled: false
+  graph:
+    edges:
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: start
+        targetType: knowledge-retrieval
+      id: start-to-retrieval
+      source: start-node
+      sourceHandle: source
+      target: retrieval-node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: knowledge-retrieval
+        targetType: if-else
+      id: retrieval-to-branch
+      source: retrieval-node
+      sourceHandle: source
+      target: grade-branch
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: if-else
+        targetType: llm
+      id: branch-g7-to-llm
+      source: grade-branch
+      sourceHandle: grade7
+      target: llm-courseware
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: if-else
+        targetType: llm
+      id: branch-g8-to-llm
+      source: grade-branch
+      sourceHandle: grade8
+      target: llm-courseware
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: if-else
+        targetType: llm
+      id: branch-g9-to-llm
+      source: grade-branch
+      sourceHandle: grade9
+      target: llm-courseware
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: code
+      id: llm-to-code
+      source: llm-courseware
+      sourceHandle: source
+      target: code-json
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: code
+        targetType: end
+      id: code-to-end
+      source: code-json
+      sourceHandle: source
+      target: end-node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        desc: 输入课件参数
+        selected: false
+        title: 开始
+        type: start
+        variables:
+        - label: 班会主题
+          max_length: 30
+          options: []
+          required: true
+          type: text-input
+          variable: topic
+        - label: 年级
+          max_length: 10
+          options:
+          - 初一
+          - 初二
+          - 初三
+          required: true
+          type: select
+          variable: grade
+        - label: 课时（分钟）
+          max_length: 10
+          options:
+          - '30'
+          - '45'
+          - '60'
+          required: true
+          type: select
+          variable: duration
+        - label: 补充说明
+          max_length: 200
+          options: []
+          required: false
+          type: paragraph
+          variable: notes
+      height: 160
+      id: start-node
+      position:
+        x: 80
+        y: 282
+      positionAbsolute:
+        x: 80
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        dataset_ids: []
+        desc: 检索课件相关科普知识
+        multiple_retrieval_config:
+          reranking_enable: false
+          reranking_mode: reranking_model
+          reranking_model:
+            model: bge-reranker-base
+            provider: langgenius/xinference/xinference
+          score_threshold: null
+          top_k: 5
+        query_variable_selector:
+        - start-node
+        - topic
+        retrieval_mode: multiple
+        selected: false
+        title: 知识检索
+        type: knowledge-retrieval
+      height: 92
+      id: retrieval-node
+      position:
+        x: 384
+        y: 282
+      positionAbsolute:
+        x: 384
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        cases:
+        - case_id: grade7
+          conditions:
+          - comparison_operator: contains
+            id: cond-g7
+            value: 初一
+            varType: string
+            variable_selector:
+            - start-node
+            - grade
+          logical_operator: and
+        - case_id: grade8
+          conditions:
+          - comparison_operator: contains
+            id: cond-g8
+            value: 初二
+            varType: string
+            variable_selector:
+            - start-node
+            - grade
+          logical_operator: and
+        - case_id: grade9
+          conditions:
+          - comparison_operator: contains
+            id: cond-g9
+            value: 初三
+            varType: string
+            variable_selector:
+            - start-node
+            - grade
+          logical_operator: and
+        desc: 按年级适配内容深度
+        selected: false
+        title: 年级判断
+        type: if-else
+      height: 220
+      id: grade-branch
+      position:
+        x: 688
+        y: 282
+      positionAbsolute:
+        x: 688
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: 生成班会课件大纲JSON
+        model:
+          completion_params:
+            temperature: 0.7
+            max_tokens: 1200
+          mode: chat
+          name: DeepSeek-V3
+          provider: langgenius/volcengine_maas/volcengine_maas
+        prompt_template:
+        - id: courseware-prompt
+          role: system
+          text: |
+            # 角色：班会课件设计师
+            你是初中AI科普班会课件设计师，帮班主任快速备课。
+
+            # 输入
+            - 主题：{{#start-node.topic#}}
+            - 年级：{{#start-node.grade#}}
+            - 课时：{{#start-node.duration#}}分钟
+            - 补充说明：{{#start-node.notes#}}
+            - 参考知识：{{#retrieval-node.result#}}
+
+            # 年级适配
+            - 初一：少专业概念，多生活类比和互动游戏
+            - 初二：可涉及AI原理简单介绍，加动手环节
+            - 初三：增加社会影响和伦理讨论深度，鼓励辩论
+
+            # 输出格式（严格JSON）
+            {
+              "courseTitle": "班会主题",
+              "grade": "年级",
+              "duration": "课时分钟",
+              "objectives": {
+                "knowledge": "知识目标",
+                "ability": "能力目标",
+                "literacy": "素养目标（信息意识/数字伦理等）"
+              },
+              "materials": ["所需材料"],
+              "flow": [
+                {"step":1,"phase":"导入","duration":"5分钟","title":"...","method":"视频/游戏/提问","content":"...","imagePrompt":"卡通风格配图提示词"},
+                {"step":2,"phase":"讲解","duration":"15分钟","title":"...","method":"讲授/演示","content":"...","imagePrompt":"信息图风格配图提示词"},
+                {"step":3,"phase":"活动","duration":"10分钟","title":"...","method":"小组讨论/动手实验","content":"...","imagePrompt":"活动场景配图提示词"},
+                {"step":4,"phase":"讨论","duration":"10分钟","title":"...","method":"全班讨论/分享","content":"...","imagePrompt":"讨论场景配图提示词"},
+                {"step":5,"phase":"总结","duration":"5分钟","title":"...","method":"教师总结","content":"...","imagePrompt":"总结页配图提示词"}
+              ],
+              "homework": "课后小任务（选做）",
+              "thinkQuestions": ["思考题1","思考题2"],
+              "teacherNotes": "给教师的教学提示"
+            }
+
+            # 风格
+            - 内容适合对应年级认知水平
+            - 活动有趣可执行
+            - 配图提示词面向AI文生图，注明卡通/信息图风格
+            - 价值观正确，符合教育方针
+        selected: false
+        title: 生成课件大纲
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 90
+      id: llm-courseware
+      position:
+        x: 992
+        y: 282
+      positionAbsolute:
+        x: 992
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        code: |
+          import json
+
+          def main(text: str) -> dict:
+              """解析课件JSON并校验必要字段"""
+              try:
+                  cleaned = text.strip()
+                  if cleaned.startswith("```json"):
+                      cleaned = cleaned[7:]
+                  if cleaned.startswith("```"):
+                      cleaned = cleaned[3:]
+                  if cleaned.endswith("```"):
+                      cleaned = cleaned[:-3]
+                  cleaned = cleaned.strip()
+                  data = json.loads(cleaned)
+                  return {
+                      "result": json.dumps(data, ensure_ascii=False, indent=2),
+                      "courseTitle": data.get("courseTitle", ""),
+                      "flow_count": str(len(data.get("flow", []))),
+                      "homework": data.get("homework", "")
+                  }
+              except json.JSONDecodeError as e:
+                  return {
+                      "result": json.dumps({"error": str(e)}, ensure_ascii=False),
+                      "courseTitle": "", "flow_count": "0", "homework": ""
+                  }
+        code_language: python3
+        desc: 解析并校验课件JSON输出
+        outputs:
+          result:
+            children: null
+            type: string
+          courseTitle:
+            children: null
+            type: string
+          flow_count:
+            children: null
+            type: string
+        selected: false
+        title: JSON解析
+        type: code
+        variables:
+        - value_selector:
+          - llm-courseware
+          - text
+          variable: text
+      height: 54
+      id: code-json
+      position:
+        x: 1296
+        y: 282
+      positionAbsolute:
+        x: 1296
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: 输出课件完整结构化数据
+        outputs:
+        - value_selector:
+          - code-json
+          - result
+          variable: json_result
+        - value_selector:
+          - code-json
+          - courseTitle
+          variable: title
+        selected: false
+        title: 结束
+        type: end
+      height: 116
+      id: end-node
+      position:
+        x: 1600
+        y: 282
+      positionAbsolute:
+        x: 1600
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 1

@@ -1,0 +1,188 @@
+app:
+  description: '面向初中生（12-15岁）的趣味AI科普对话智能体，用语通俗年轻化，基于专属知识库回答AI通识问题'
+  icon: 🔍
+  icon_background: '#E0F2FE'
+  mode: chat
+  name: 探客·AI科普向导
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/volcengine_maas:0.0.20@aff2eaf766b1774519c3ca0e77de0b28c87b71cce6390b22a103518e8a5e4ae7
+kind: app
+version: 0.3.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+      image:
+        enabled: false
+    opening_statement: |
+      嗨！👋 我是「探客」，你的AI科普伙伴！
+      对人工智能好奇吗？刷视频时想过「它怎么知道我爱看这个」？用过语音助手吗？
+      随便问我关于AI的任何问题，我用你听得懂的话给你讲～
+      ⚡ 试试问我：
+      · AI是怎么认出照片里的人的？
+      · 为什么刷视频停不下来？
+      · AI会不会代替人类工作？
+      （内容由AI生成）
+    retriever_resource:
+      enabled: true
+    sensitive_word_avoidance:
+      enabled: true
+    speech_to_text:
+      enabled: true
+    suggested_questions:
+    - AI是怎么学会认图的？
+    - 语音助手为什么能听懂我说话？
+    - 刷视频推荐是AI在偷看吗？
+    - AI会不会变坏？
+    - 我能自己做一个AI吗？
+    suggested_questions_after_answer:
+      enabled: true
+    text_to_speech:
+      enabled: true
+      language: zh-CN
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: start
+        targetType: llm
+      id: start-to-llm
+      source: start-node
+      sourceHandle: source
+      target: llm-node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: end
+      id: llm-to-end
+      source: llm-node
+      sourceHandle: source
+      target: end-node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        desc: ''
+        selected: false
+        title: 开始
+        type: start
+        variables: []
+      height: 54
+      id: start-node
+      position:
+        x: 80
+        y: 282
+      positionAbsolute:
+        x: 80
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: 科普问答核心LLM节点，使用系统提示词约束回答风格
+        model:
+          completion_params:
+            temperature: 0.7
+            max_tokens: 512
+          mode: chat
+          name: DeepSeek-V3
+          provider: langgenius/volcengine_maas/volcengine_maas
+        prompt_template:
+        - id: system-role
+          role: system
+          text: |
+            # 角色设定：探客·AI科普向导
+
+            你是「探客」，一名面向12-15岁初中生的AI科普向导。
+            你的风格像一位亲切有趣的学长/学姐，擅长用生活中的例子讲清楚AI是什么。
+
+            ## 你的说话方式
+            1. **先一句话说清结论**：开门见山
+            2. **打个比方帮人秒懂**：用初中生熟悉的事物比喻
+            3. **联系日常生活**：举一个他们可能经历过的真实场景
+            4. **一句话小结**：收尾总结
+
+            ## 语气要求
+            - 像和朋友聊天，用"你"不用"您"
+            - 适当使用 emoji 增加趣味
+            - 避开专业术语，必须用时先用比喻解释
+            - 每条回答控制在 **250字以内**
+
+            ## 知识范围
+            - 严格依据知识库内容回答
+            - 知识库中没有的，回复："这个问题我也不太确定🤔，不过我可以帮你一起查资料或问问老师！"
+            - **绝不编造任何信息**
+
+            ## 安全边界（严格遵守）
+            1. 不提供任何危险操作指引
+            2. 不涉及暴力、色情、违法、赌博内容
+            3. 遇到不适合青少年的问题，温和引导到健康话题
+            4. 讨论AI利弊时，呈现正反两面，鼓励独立思考
+            5. 价值观符合社会主义核心价值观
+
+            ## AI生成标注
+            回复末尾标注："（内容由AI生成）"
+        selected: false
+        title: AI科普问答
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 90
+      id: llm-node
+      position:
+        x: 384
+        y: 282
+      positionAbsolute:
+        x: 384
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: ''
+        outputs:
+        - value_selector:
+          - llm-node
+          - text
+          variable: text
+        selected: false
+        title: 结束
+        type: end
+      height: 54
+      id: end-node
+      position:
+        x: 688
+        y: 282
+      positionAbsolute:
+        x: 688
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 1
